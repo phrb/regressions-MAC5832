@@ -27,12 +27,39 @@ def plot_sct(data_x,
              title,
              xlabel,
              ylabel):
-    fig     = plt.figure(1, figsize=(9, 6))
-    ax      = fig.add_subplot(111)
+    fig = plt.figure(1, figsize=(9, 6))
+    ax  = fig.add_subplot(111)
 
     ax.scatter(data_x, data_y)
-
     ax.errorbar(data_x, data_y, yerr = data_error_y, linestyle="None")
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    plt.tight_layout()
+
+    fig.savefig("{0}.eps".format(plot_name), format = 'eps', dpi = 1000)
+
+    plt.clf()
+
+def plot_sct_cmp(data1_x,
+                 data1_y,
+                 data1_error_y,
+                 data2_x,
+                 data2_y,
+                 data2_error_y,
+                 plot_name,
+                 title,
+                 xlabel,
+                 ylabel):
+    fig = plt.figure(1, figsize=(9, 6))
+    ax  = fig.add_subplot(111)
+
+    ax.scatter(data1_x, data1_y)
+    ax.errorbar(data1_x, data1_y, yerr = data1_error_y, linestyle="None")
+
+    ax.scatter(data2_x, data2_y)
+    ax.errorbar(data2_x, data2_y, yerr = data2_error_y, linestyle="None")
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
@@ -70,14 +97,10 @@ def plot_bar(index_range,
 
     plt.clf()
 
-if __name__ == '__main__':
-    data = load_file("dataset-tarefa2.npz")
-
-    training_samples         = data[0]
-    training_classifications = data[1]
-    testing_samples          = data[2]
-    testing_classifications  = data[3]
-
+def measure_iterations(training_samples,
+                       training_classifications,
+                       testing_samples,
+                       testing_classifications):
     data_x = []
     data_y = []
     data_y_error = []
@@ -112,6 +135,63 @@ if __name__ == '__main__':
              "Acc. vs. Iterations",
              "Iteration",
              "Accuracy")
+
+def measure_rate(training_samples,
+                 training_classifications,
+                 testing_samples,
+                 testing_classifications):
+    data_x = []
+    data_y = []
+    data_y_error = []
+
+    measurements = 10
+    rates        = 20
+    rate         = 16.
+
+    for j in range(measurements):
+        print("Rate: {0}".format(rate))
+
+        data_ys = []
+        for j in range(measurements):
+            predictions = gradient_descent(training_samples,
+                                           training_classifications,
+                                           testing_samples,
+                                           gradient_function        = linear_regression_gradient,
+                                           learning_rate_function   = inverse_log_learning_rate,
+                                           learning_rate_parameters = {'rate': rate},
+                                           iterations               = 5000,
+                                           batch_percentage         = .0005,
+                                           regularizer_function     = l2_regularization,
+                                           regularizer_parameters   = {'lambda': .0051})
+
+            data_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        data_y_error.append(stats.sem(data_ys))
+        data_y.append(np.mean(data_ys))
+        data_x.append(np.log2(rate))
+
+        rate /= 2.
+
+    plot_sct(data_x,
+             data_y,
+             data_y_error,
+             "acc_vs_rate",
+             "Accuracy. vs. Learning Rate",
+             "Learning Rate (log2)",
+             "Accuracy")
+
+if __name__ == '__main__':
+    data = load_file("dataset-tarefa2.npz")
+
+    training_samples         = data[0]
+    training_classifications = data[1]
+    testing_samples          = data[2]
+    testing_classifications  = data[3]
+
+    measure_rate(training_samples,
+                 training_classifications,
+                 testing_samples,
+                 testing_classifications)
 
     predictions = scikit_regression(training_samples,
                                     training_classifications,
