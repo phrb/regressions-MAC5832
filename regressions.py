@@ -1,3 +1,5 @@
+from sklearn import datasets, linear_model
+
 import numpy as np
 import random
 import csv
@@ -12,6 +14,20 @@ def linear_regression_gradient(weights,
     return ((2. / float(samples.shape[0])) * \
             (np.dot(samples.T, np.dot(samples, weights)) - \
              np.dot(samples.T, classifications)))
+
+def logistic_regression_gradient(weights,
+                                 samples,
+                                 classifications,
+                                 parameters):
+
+    gradient = np.zeros(weights.shape)
+    for i in range(samples.shape[0]):
+        logistic = 1. / (1. + np.exp(classifications[i] * \
+                                     np.dot(weights.T, samples[i])))
+
+        gradient += np.dot(classifications[i] * samples[i], logistic)
+
+    return (-1 / samples.shape[0]) * gradient
 
 # Learning Rates:
 
@@ -35,12 +51,38 @@ def l2_regularization(weights,
                       parameters):
     return gradient + (parameters['lambda'] * weights)
 
+# Utilities:
+
+def load_file(npz_filename):
+    with np.load(npz_filename) as files:
+        training_samples         = files['Xtrain'].item(0).toarray()
+        training_classifications = files['ytrain']
+
+        testing_samples          = files['Xteste'].item(0).toarray()
+        testing_classifications  = files['yteste']
+
+    return [training_samples, training_classifications,
+            testing_samples, testing_classifications]
+
+def get_error_percentage(predictions, testing_classifications):
+    errors = 0
+    for i, j in zip(predictions, testing_classifications):
+        if np.sign(i) != np.sign(j):
+            errors += 1
+
+    return float(errors) / float(len(testing_classifications))
+
+def get_accuracy_percentage(predictions, testing_classifications):
+    return 1. - get_error_percentage(predictions, testing_classifications)
+
 # Gradient Descent:
 
 def get_initial_weights(size):
     return np.zeros(size)
 
-def gradient_descent(npz_filename,
+def gradient_descent(training_samples,
+                     training_classifications,
+                     testing_samples,
                      iterations               = 10,
                      gradient_function        = linear_regression_gradient,
                      gradient_parameters      = None,
@@ -50,57 +92,51 @@ def gradient_descent(npz_filename,
                      regularizer_parameters   = None,
                      batch_percentage         = 1.):
 
-    with np.load(npz_filename) as files:
-        training_samples         = files['Xtrain'].item(0).toarray()
-        training_classifications = files['ytrain']
-
-        testing_samples          = files['Xteste'].item(0).toarray()
-        testing_classifications  = files['yteste']
-
-    print(training_samples.shape)
-    weights = get_initial_weights(training_samples.shape[1])
-
+    weights    = get_initial_weights(training_samples.shape[1])
     batch_size = int(batch_percentage * training_samples.shape[0])
-    print(batch_size)
     for i in range(iterations):
-#        print("Iteration: {0}".format(i))
-#        print("Calculating New Batch...")
         batch      = np.random.randint(training_samples.shape[0],
                                        size = batch_size)
 
         samples         = training_samples[batch, :]
         classifications = training_classifications[batch]
 
-#        print("Done.\nCalculating Gradient...")
         gradient = gradient_function(weights,
                                      samples,
                                      classifications,
                                      gradient_parameters)
 
-#        print("Done.\nRegularizing Gradient...")
         regularized_gradient = regularizer_function(weights,
                                                     gradient,
                                                     regularizer_parameters)
 
-#        print("Done.\nAdjusting Learning Rate...")
         learning_rate  = learning_rate_function(i, learning_rate_parameters)
-#        print("Done.\nUpdating Weights...")
         weights       += -1 * learning_rate * regularized_gradient
-#        print("Done.")
 
     predictions = np.dot(testing_samples, weights)
-    errors = 0
-    for i, j in zip(predictions, testing_classifications):
-        if np.sign(i) != np.sign(j):
-            errors += 1
+    return predictions
 
-    print(errors, len(testing_classifications))
-    return weights
+# Scikit Learn Learners:
 
-gradient_descent("dataset-tarefa2.npz",
-                 learning_rate_function   = inverse_log_learning_rate,
-                 learning_rate_parameters = {'rate': 1.},
-                 iterations               = 60,
-                 batch_percentage         = 1.,
-                 regularizer_function     = l2_regularization,
-                 regularizer_parameters   = {'lambda': 0.01})
+def scikit_regression(training_samples,
+                      training_classifications,
+                      testing_samples,
+                      model = "linear",
+                      batch_percentage = .01):
+
+    batch_size = int(batch_percentage * training_samples.shape[0])
+    batch = np.random.randint(training_samples.shape[0],
+                                   size = batch_size)
+
+    samples = training_samples[batch, :]
+    classifications = training_classifications[batch]
+
+    if model == "linear":
+        regr = linear_model.LinearRegression()
+    elif model == "linear_l2":
+        regr = linear_model.Ridge()
+
+    regr.fit(samples, classifications)
+    predictions = regr.predict(testing_samples)
+
+    return predictions
