@@ -100,27 +100,35 @@ def plot_bar(index_range,
 def measure_iterations(training_samples,
                        training_classifications,
                        testing_samples,
-                       testing_classifications):
+                       testing_classifications,
+                       gradient,
+                       rate,
+                       rate_parameters,
+                       batch,
+                       regularizer,
+                       regularizer_parameters,
+                       file_title,
+                       title):
     data_x = []
     data_y = []
     data_y_error = []
 
-    measurements = 10
+    measurements = 5
 
-    for iterations in range(1000, 20000, 1000):
+    for iterations in range(1000, 26000, 1000):
         print("Iterations: {0}".format(iterations))
         data_ys = []
         for j in range(measurements):
             predictions = gradient_descent(training_samples,
                                            training_classifications,
                                            testing_samples,
-                                           gradient_function        = linear_regression_gradient,
-                                           learning_rate_function   = inverse_log_learning_rate,
-                                           learning_rate_parameters = {'rate': .1},
+                                           gradient_function        = gradient,
+                                           learning_rate_function   = rate,
+                                           learning_rate_parameters = rate_parameters,
                                            iterations               = iterations,
-                                           batch_percentage         = .0005,
-                                           regularizer_function     = l2_regularization,
-                                           regularizer_parameters   = {'lambda': .0051})
+                                           batch_percentage         = batch,
+                                           regularizer_function     = regularizer,
+                                           regularizer_parameters   = regularizer_parameters)
 
             data_ys.append(get_accuracy_percentage(predictions, testing_classifications))
 
@@ -131,24 +139,32 @@ def measure_iterations(training_samples,
     plot_sct(data_x,
              data_y,
              data_y_error,
-             "acc_vs_iterations",
-             "Acc. vs. Iterations",
+             "acc_vs_iterations_{0}".format(file_title),
+             "Acc. vs. Iterations {0}".format(title),
              "Iteration",
              "Accuracy")
 
 def measure_rate(training_samples,
                  training_classifications,
                  testing_samples,
-                 testing_classifications):
+                 testing_classifications,
+                 gradient,
+                 iterations,
+                 rate_function,
+                 batch,
+                 regularizer,
+                 regularizer_parameters,
+                 file_title,
+                 title):
     data_x = []
     data_y = []
     data_y_error = []
 
-    measurements = 10
-    rates        = 20
+    measurements = 5
+    rates        = 25
     rate         = 16.
 
-    for j in range(measurements):
+    for k in range(rates):
         print("Rate: {0}".format(rate))
 
         data_ys = []
@@ -156,13 +172,13 @@ def measure_rate(training_samples,
             predictions = gradient_descent(training_samples,
                                            training_classifications,
                                            testing_samples,
-                                           gradient_function        = linear_regression_gradient,
-                                           learning_rate_function   = inverse_log_learning_rate,
+                                           gradient_function        = gradient,
+                                           learning_rate_function   = rate_function,
                                            learning_rate_parameters = {'rate': rate},
-                                           iterations               = 5000,
-                                           batch_percentage         = .0005,
-                                           regularizer_function     = l2_regularization,
-                                           regularizer_parameters   = {'lambda': .0051})
+                                           iterations               = iterations,
+                                           batch_percentage         = batch,
+                                           regularizer_function     = regularizer,
+                                           regularizer_parameters   = regularizer_parameters)
 
             data_ys.append(get_accuracy_percentage(predictions, testing_classifications))
 
@@ -175,8 +191,8 @@ def measure_rate(training_samples,
     plot_sct(data_x,
              data_y,
              data_y_error,
-             "acc_vs_rate",
-             "Accuracy. vs. Learning Rate",
+             "acc_vs_rate_{0}".format(file_title),
+             "Accuracy. vs. Learning Rate {0}".format(title),
              "Learning Rate (log2)",
              "Accuracy")
 
@@ -191,12 +207,59 @@ if __name__ == '__main__':
     measure_rate(training_samples,
                  training_classifications,
                  testing_samples,
-                 testing_classifications)
+                 testing_classifications,
+                 linear_regression_gradient,
+                 5000,
+                 inverse_log_learning_rate,
+                 .0005,
+                 no_regularization,
+                 {'lambda': .0051}, # Does not matter here
+                 "linreg",
+                 "(Linear Regression)")
 
-    predictions = scikit_regression(training_samples,
-                                    training_classifications,
-                                    testing_samples,
-                                    model = "linear_l2",
-                                    batch_percentage = .0004)
+    measure_rate(training_samples,
+                 training_classifications,
+                 testing_samples,
+                 testing_classifications,
+                 linear_regression_gradient,
+                 5000,
+                 inverse_log_learning_rate,
+                 .0005,
+                 l2_regularization,
+                 {'lambda': .0051}, # Does not matter here
+                 "linregL2",
+                 "(Linear Regression with L2)")
 
-    print(get_accuracy_percentage(predictions, testing_classifications))
+    measure_rate(training_samples,
+                 training_classifications,
+                 testing_samples,
+                 testing_classifications,
+                 logistic_regression_gradient,
+                 5000,
+                 inverse_log_learning_rate,
+                 .0005,
+                 no_regularization,
+                 {'lambda': .0051}, # Does not matter here
+                 "logreg",
+                 "(Logistic Regression)")
+
+    measure_rate(training_samples,
+                 training_classifications,
+                 testing_samples,
+                 testing_classifications,
+                 logistic_regression_gradient,
+                 5000,
+                 inverse_log_learning_rate,
+                 .0005,
+                 l2_regularization,
+                 {'lambda': .0051}, # Does not matter here
+                 "logregL2",
+                 "(Logistic Regression with L2)")
+
+#    predictions = scikit_regression(training_samples,
+#                                    training_classifications,
+#                                    testing_samples,
+#                                    model = "linear_l2",
+#                                    batch_percentage = .0004)
+#
+#    print(get_accuracy_percentage(predictions, testing_classifications))
