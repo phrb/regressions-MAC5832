@@ -16,7 +16,7 @@ def config_matplotlib():
     plt.rc('font', family = 'serif')
 
     font = {'family' : 'serif',
-            'size'   : 20}
+            'size'   : 18}
 
     mpl.rc('font', **font)
 
@@ -113,9 +113,9 @@ def measure_iterations(training_samples,
     data_y = []
     data_y_error = []
 
-    measurements = 5
+    measurements = 10
 
-    for iterations in range(1000, 26000, 1000):
+    for iterations in range(1000, 30000, 1000):
         print("Iterations: {0}".format(iterations))
         data_ys = []
         for j in range(measurements):
@@ -144,6 +144,59 @@ def measure_iterations(training_samples,
              "Iteration",
              "Accuracy")
 
+def measure_all_iterations(training_samples,
+                           training_classifications,
+                           testing_samples,
+                           testing_classifications):
+    measure_iterations(training_samples,
+                       training_classifications,
+                       testing_samples,
+                       testing_classifications,
+                       linear_regression_gradient,
+                       inverse_log_learning_rate,
+                       {'rate': .5},
+                       .0005,
+                       no_regularization,
+                       {'lambda': .0051}, # Does not matter here
+                       "linreg",
+                       "(Linear Regression)")
+    measure_iterations(training_samples,
+                       training_classifications,
+                       testing_samples,
+                       testing_classifications,
+                       linear_regression_gradient,
+                       inverse_log_learning_rate,
+                       {'rate': .5},
+                       .0005,
+                       l2_regularization,
+                       {'lambda': .0051},
+                       "linregL2",
+                       "(Linear Regression with L2)")
+    measure_iterations(training_samples,
+                       training_classifications,
+                       testing_samples,
+                       testing_classifications,
+                       logistic_regression_gradient,
+                       inverse_log_learning_rate,
+                       {'rate': 2.},
+                       .0005,
+                       no_regularization,
+                       {'lambda': .0051}, # Does not matter here
+                       "logreg",
+                       "(Logistic Regression)")
+    measure_iterations(training_samples,
+                       training_classifications,
+                       testing_samples,
+                       testing_classifications,
+                       linear_regression_gradient,
+                       inverse_log_learning_rate,
+                       {'rate': 2.},
+                       .0005,
+                       l2_regularization,
+                       {'lambda': .0051}, # Does not matter here
+                       "logregL2",
+                       "(Logistic Regression with L2)")
+
 def measure_rate(training_samples,
                  training_classifications,
                  testing_samples,
@@ -162,7 +215,7 @@ def measure_rate(training_samples,
 
     measurements = 5
     rates        = 25
-    rate         = 16.
+    rate         = 32.
 
     for k in range(rates):
         print("Rate: {0}".format(rate))
@@ -196,20 +249,16 @@ def measure_rate(training_samples,
              "Learning Rate (log2)",
              "Accuracy")
 
-if __name__ == '__main__':
-    data = load_file("dataset-tarefa2.npz")
-
-    training_samples         = data[0]
-    training_classifications = data[1]
-    testing_samples          = data[2]
-    testing_classifications  = data[3]
-
+def measure_all_rates(training_samples,
+                      training_classifications,
+                      testing_samples,
+                      testing_classifications):
     measure_rate(training_samples,
                  training_classifications,
                  testing_samples,
                  testing_classifications,
                  linear_regression_gradient,
-                 5000,
+                 15000,
                  inverse_log_learning_rate,
                  .0005,
                  no_regularization,
@@ -222,7 +271,7 @@ if __name__ == '__main__':
                  testing_samples,
                  testing_classifications,
                  linear_regression_gradient,
-                 5000,
+                 15000,
                  inverse_log_learning_rate,
                  .0005,
                  l2_regularization,
@@ -235,7 +284,7 @@ if __name__ == '__main__':
                  testing_samples,
                  testing_classifications,
                  logistic_regression_gradient,
-                 5000,
+                 15000,
                  inverse_log_learning_rate,
                  .0005,
                  no_regularization,
@@ -248,13 +297,146 @@ if __name__ == '__main__':
                  testing_samples,
                  testing_classifications,
                  logistic_regression_gradient,
-                 5000,
+                 15000,
                  inverse_log_learning_rate,
                  .0005,
                  l2_regularization,
                  {'lambda': .0051}, # Does not matter here
                  "logregL2",
                  "(Logistic Regression with L2)")
+
+def measure_batch(training_samples,
+                  training_classifications,
+                  testing_samples,
+                  testing_classifications,
+                  gradient,
+                  iterations,
+                  rate,
+                  rate_function,
+                  regularizer,
+                  regularizer_parameters,
+                  file_title,
+                  title):
+    data_x = []
+    data_y = []
+    data_y_error = []
+
+    measurements = 5
+    batches      = 10
+    batch        = .0005
+
+    for k in range(batches):
+        print("Batch: {0}".format(batch))
+
+        data_ys = []
+        for j in range(measurements):
+            predictions = gradient_descent(training_samples,
+                                           training_classifications,
+                                           testing_samples,
+                                           gradient_function        = gradient,
+                                           learning_rate_function   = rate_function,
+                                           learning_rate_parameters = {'rate': rate},
+                                           iterations               = iterations,
+                                           batch_percentage         = batch,
+                                           regularizer_function     = regularizer,
+                                           regularizer_parameters   = regularizer_parameters)
+
+            data_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        data_y_error.append(stats.sem(data_ys))
+        data_y.append(np.mean(data_ys))
+        data_x.append(np.log2(batch))
+
+        batch *= 2.
+
+    plot_sct(data_x,
+             data_y,
+             data_y_error,
+             "acc_vs_batchp_{0}".format(file_title),
+             "Accuracy. vs. Batch {0}".format(title),
+             "Percentage of Examples (log2)",
+             "Accuracy")
+
+def measure_all_batches(training_samples,
+                        training_classifications,
+                        testing_samples,
+                        testing_classifications):
+    iterations = 500
+    measure_batch(training_samples,
+                  training_classifications,
+                  testing_samples,
+                  testing_classifications,
+                  linear_regression_gradient,
+                  iterations,
+                  .4,
+                  inverse_log_learning_rate,
+                  no_regularization,
+                  {'lambda': .0051}, # Does not matter here
+                  "linreg",
+                  "(Linear Regression)")
+
+    measure_batch(training_samples,
+                  training_classifications,
+                  testing_samples,
+                  testing_classifications,
+                  linear_regression_gradient,
+                  iteraitons,
+                  .4,
+                  inverse_log_learning_rate,
+                  l2_regularization,
+                  {'lambda': .0051}, # Does not matter here
+                  "linregL2",
+                  "(Linear Regression with L2)")
+
+    measure_batch(training_samples,
+                  training_classifications,
+                  testing_samples,
+                  testing_classifications,
+                  logistic_regression_gradient,
+                  iterations,
+                  2.,
+                  inverse_log_learning_rate,
+                  no_regularization,
+                  {'lambda': .0051}, # Does not matter here
+                  "logreg",
+                  "(Logistic Regression)")
+
+    measure_batch(training_samples,
+                  training_classifications,
+                  testing_samples,
+                  testing_classifications,
+                  logistic_regression_gradient,
+                  iterations,
+                  2.,
+                  inverse_log_learning_rate,
+                  l2_regularization,
+                  {'lambda': .0051}, # Does not matter here
+                  "logregL2",
+                  "(Logistic Regression with L2)")
+
+if __name__ == '__main__':
+    config_matplotlib()
+    data = load_file("dataset-tarefa2.npz")
+
+    training_samples         = data[0]
+    training_classifications = data[1]
+    testing_samples          = data[2]
+    testing_classifications  = data[3]
+
+    measure_all_batches(training_samples,
+                        training_classifications,
+                        testing_samples,
+                        testing_classifications)
+
+#    measure_all_rates(training_samples,
+#                      training_classifications,
+#                      testing_samples,
+#                      testing_classifications)
+
+#    measure_all_iterations(training_samples,
+#                           training_classifications,
+#                           testing_samples,
+#                           testing_classifications)
 
 #    predictions = scikit_regression(training_samples,
 #                                    training_classifications,
