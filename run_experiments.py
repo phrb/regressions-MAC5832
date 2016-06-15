@@ -322,7 +322,7 @@ def measure_batch(training_samples,
     data_y_error = []
 
     measurements = 5
-    batches      = 10
+    batches      = 8
     batch        = .0005
 
     for k in range(batches):
@@ -380,7 +380,7 @@ def measure_all_batches(training_samples,
                   testing_samples,
                   testing_classifications,
                   linear_regression_gradient,
-                  iteraitons,
+                  iterations,
                   .4,
                   inverse_log_learning_rate,
                   l2_regularization,
