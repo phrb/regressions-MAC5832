@@ -13,6 +13,9 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
 \graphicspath{{../img/}}
 
 \newcommand{\rom}[1]{\uppercase\expandafter{\romannumeral #1\relax}}
@@ -24,7 +27,7 @@
 \begin{titlepage}
     \centering
     \vspace*{4cm}
-    \textbf{\huge{Classificando Tweets -- MAC5832}}\\
+    \textbf{\huge{Gradiente Descendente Estocástico -- MAC5832}}\\
 
     \vskip 1cm
 
@@ -42,20 +45,19 @@
 
 \section{Introdução} \label{sec:intro}
 
-Este relatório apresenta visualizações e algoritmos de aprendizado de máquina
-utilizados no primeiro \textit{dataset} da disciplina \textbf{MAC5832}.
+Este documento descreve as implementações realizadas para o Trabalho $2$ da
+disciplina \textit{MAC5832}, apresenta análises de desempenho desses algoritmos
+segundo seus parâmetros, e compara o desempenho dessas implementações com
+algoritmos do pacote \texttt{Scikit Learn}.
 
-O \textit{dataset} consiste de um conjunto de \textit{tweets} sobre companhias
-aéreas, associado a avaliações de \textit{sentimento}.  Os algoritmos de
-aprendizado de máquina implementados foram o \textit{Perceptron} e o
-\textit{Gradient Descent}. Os dois algoritmos estão descritos nas Seções
-\ref{sec:percep} e \ref{sec:gd}.  Visualizações do \textit{dataset} são
-apresentadas na Seção \ref{sec:viz}. A Seção \ref{sec:concl} discute os
-resultados e conclui este relatório.
+Foram implementados um algoritmo para Gradiente Descendente Estocástico, dois
+modelos de regressão e um método de regularização, totalizando quatro
+combinações de modelos: Regressão Linear, Regressão Linear com Regularização
+$L_2$, Regressão Logística e Regressão Logística com Regularização $L_2$.
 
 \subsection{Estrutura de Diretórios}
 
-Os diretórios deste trabalhos estão organizados da
+Os diretórios deste trabalho estão organizados da
 seguinte forma:
 
 \paragraph{\texttt{./doc}} Contém os arquivos necessários
@@ -70,117 +72,149 @@ para o \textit{Perceptron} e \textit{Gradient Descent}.
 \paragraph{\texttt{./src/plot}} Contém o código para
 gerar as figuras com as visualizações, e também as figuras.
 
-\section{Algoritmos de Aprendizado de Máquina}
+\section{Gradiente Estocástico Descendente}
 
-Esta Seção discute os algoritmos de aprendizado de máquina
-e suas implementações, feitas em \texttt{Python 3} e usando os
-módulos \texttt{nltk}, \texttt{sklearn}, \texttt{numpy},
-\texttt{csv} e \texttt{re}.
+O método do \textit{Gradiente Estocástico Descendente} é uma técnica iterativa
+para minimização de funções duplamente diferenciáveis. No nosso caso, o método
+é aplicado para minimizar o erro de classificação $E_{in}(\textbf{w},
+\textbf{X}, \textbf{y})$, onde $\textbf{w}$ é um vetor de pesos, \textbf{X} é
+uma matriz de exemplos, ou amostras, e \textbf{y} é um vetor de classificações,
+onde cada classificação $\textbf{y}(i)$ corresponde a um exemplo
+$\textbf{X}(i)$.
 
-Utilizei o tutorial sobre \textit{Bag of
-Words}\footnote{\url{https://www.kaggle.com/c/word2vec-nlp-tutorial/details/part-1-for-beginners-bag-of-words}},
-disponibilizado na página da Tarefa \rom{1}, para gerar um \textit{vocabulário}
-com as palavras mais frequentes nos \textit{tweets} do \textit{dataset}.
+Para encontrar o vetor de pesos $\textbf{w}^{*}$ que minimiza $E_{in}(\cdot)$,
+cada iteração do método do Gradiente Estocástico Descendente calcula o
+\textit{gradiente} $\nabla{}E_{in}(\cdot)$ e atualiza o vetor atual de pesos.
 
-O vocabulário foi então usado para gerar os \textit{vetores de características}
-utilizados para treinar os algoritmos e realizar as predições.
-Os vetores de características contêm um \texttt{1} na posição
-correspondente a uma determinada palavra se o \textit{tweet}
-contém aquela palavra, e um \texttt{0} caso contrário.
+A técnica do Gradiente Estocástico Descendente pode ser compreendida
+intuitivamente como a \lq\lq{}exploração\rq\rq{} de um terreno com diferentes
+inclinações e profundidades, utilizando uma bola sujeita à força da gravidade.
+A bola tenderá a encontrar o ponto do terreno com menor profundidade, mas o
+local inicial terá bastante impacto no local final. Formas de atenuar esse
+problema incluem utilizar várias bolas ao mesmo tempo, ou bolas com
+\lq\lq{}coeficientes de atrito\rq\rq{} diferentes.
 
-Além disso, cada vetor de características é inicializado com
-um \texttt{1} na primeira posição, correspondente ao
-\textit{threshold} do classificador.
+\subsection{Algoritmo}
 
-\subsection{Perceptron} \label{sec:percep}
+A implementação da técnica do Gradiente Estocástico Descendente deste trabalho
+foi feita na linguagem \texttt{Python 3.5.1} e está descrita em pseudocódigo no
+Algoritmo \ref{alg:GSD}. O resto dessa Seção descreve a implementação em
+detalhes.
 
-Considere um vetor $\boldsymbol{w}$ de pesos inicializado com $N + 1$
-\texttt{1}s, onde cada peso $w_i, 0 \leq i \leq N$ corresponde a uma
-característica dos vetores de características dos \textit{tweets} do
-\textit{dataset}, e $N$ é o número de características extraídas do conjunto.
+\subsubsection{Parâmetros}
 
-A cada passo do algoritmo \textit{Perceptron}, vamos calcular a classificação
-$c_j$ de cada um dos $M$ vetores $\boldsymbol{x}_j, 0 \leq j \leq M$ de características
-usando a seguinte equação:
+A implementação foi feita de forma \textit{modular}, permitindo que funções
+para o cálculo do gradiente e da taxa de aprendizado fossem passadas como
+parâmetro. Esta Seção descreve os parâmetros para o algoritmo implementado.
 
-\begin{align*}
-    c_j = step\bigg(\sum_{i = 0}^{N}{w_i\boldsymbol{x}_{j}^{i}}\bigg) = step\bigg(\boldsymbol{w}^{T}\boldsymbol{x}_j\bigg)
-\end{align*}
+\paragraph{Taxa de Aprendizado inicial ($\alpha^{\prime}$):}
 
-Onde a função $step$ é dada por:
-
-\begin{align*}
-    step(y) = \begin{cases}
-        1 & \text{ se } y \geq 0 \\
-        -1 & \text{ caso contrário.}
-    \end{cases}
-\end{align*}
-
-Depois, para cada vetor $\boldsymbol{x}_j, 0 \leq j \leq M$ vamos atualizar o vetor
-$\boldsymbol{w}$ de pesos da seguinte maneira:
+Em todos os experimentos deste trabalho utilizei a seguinte função
+para o cálculo da taxa de aprendizado $\alpha(i)$, onde $i$ é o número da
+iteração atual do algoritmo, e $\alpha^{\prime}$ é a taxa de aprendizado
+inicial:
 
 \begin{align*}
-    \boldsymbol{w} = \boldsymbol{w} + \alpha\boldsymbol{x}_j(z_j - c_j)
+    \alpha(i) = \frac{\alpha^{\prime}}{1 + log_{2}i}
 \end{align*}
 
-Aqui, $\boldsymbol{x}_j$ é um vetor de características, $\alpha$ é a
-\textit{taxa de aprendizado}, $z_j$ é a classificação correta de
-$\boldsymbol{x}_j$ e $c_j$ é a predição feita pelo algoritmo nessa iteração.
+Seguindo a metáfora para a compreensão intuitiva da técnica, a ideia é
+modificar o \lq\lq{}coeficiente de atrito\rq\rq{}, isto é, a taxa de
+aprendizado, para que em iterações inicias sejam permitidas variações maiores
+no vetor de pesos, e posteriomente na execução do algoritmo, apenas
+\lq\lq{}saltos\rq\rq{} menores.
 
-A minha implementação do \textit{Perceptron} executa esse procedimento para
-todos os exemplos no conjunto de testes até que o número de exemplos
-classificados erroneamente seja menor ou igual a um limite $\mu$. Nesse
-\textit{dataset}, utilizei $\mu = 6$. Depois do treinamento do modelo, obtemos
-um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições para cada \textit{tweet}
-contido nos dados para teste.
+\paragraph{Função do Gradiente ($\nabla{}E_{in}(\cdot)$):}
 
-\subsection{Gradient Descent} \label{sec:gd}
+A expressão para o cálculo do gradiente será diferente, de acordo com o modelo
+de regressão que utilizarmos em conjunto com a técnica de Gradiente Estocástico
+Descendente. As expressões para cálculo do gradiente dos quatros modelos de
+regressão implementados neste trabalho estão descritas na Seção \ref{sec:regr}.
 
-Considere um vetor $\boldsymbol{w}$ de pesos inicializado
-com $N + 1$ \texttt{1}s, onde cada peso $w_i,\: 0 \leq i \leq N$
-corresponde a uma característica dos vetores de características
-dos \textit{tweets} do \textit{dataset}, e $N$ é o número
-de características extraídas do conjunto.
+A implementação de todas as funções de gradiente recebe como entrada um vetor
+de pesos \textbf{w}, e um subconjunto dos exemplos em \textbf{X}, junto com
+suas classificações em \textbf{y} correspondentes. A saída dessas funções é o
+gradiente calculado de acordo com o modelo de regressão correspondente.
 
-A cada passo do algoritmo \textit{Gradient Descent}, vamos calcular a
-classificação $c_j$ de todos os vetores $\boldsymbol{x}_j,\: 0 \leq j \leq M,\: \boldsymbol{x}_j \in
-\boldsymbol{X}$ de características, onde $\boldsymbol{X}$ é a matriz
-de exemplos. Faremos a classificação usando a seguinte equação:
+\paragraph{Número de Iterações ($I$):}
 
-\begin{align*}
-    \boldsymbol{C} = \boldsymbol{w}^{T}\boldsymbol{X}
-\end{align*}
+É o número de iterações realizadas antes de se devolver o vetor final de pesos
+$\textbf{w}(I)$.
 
-Aqui, $\boldsymbol{C}$ é um vetor contendo um \textit{valor real} para
-cada exemplo $\boldsymbol{x}_j \in \boldsymbol{X}$. Para obter uma predição
-da classificação de algum $\boldsymbol{x}_j$, usamos função $step(\boldsymbol{C}_j)$,
-onde $\boldsymbol{C}_j$ é $j$-ésimo valor em $\boldsymbol{C}$. A função $step$
-é, novamente, dada por:
+\paragraph{Vetor Inicial de Pesos ($\textbf{w}(0)$):}
 
-\begin{align*}
-    step(y) = \begin{cases}
-        1 & \text{ se } y \geq 0 \\
-        -1 & \text{ caso contrário.}
-    \end{cases}
-\end{align*}
+Deve ter o mesmo número de elementos em cada exemplo de \textbf{X}.
+É inicializado com zeros.
 
-Depois de calcular $\boldsymbol{C}$,  atualizamos o vetor $\boldsymbol{w}$
-de pesos da seguinte maneira:
+\paragraph{Matriz de Exemplos ($\textbf{X}$):}
 
-\begin{align*}
-    \boldsymbol{w} = \boldsymbol{w} - \alpha \frac{1}{M} \boldsymbol{X}(\boldsymbol{C} - \boldsymbol{Z})
-\end{align*}
+Contém os exemplos para teste em suas linhas.
 
-Aqui, $\boldsymbol{X}$ é a matriz de exemplos, $\alpha$ é a \textit{taxa de
-aprendizado}, $\boldsymbol{Z}$ é a matriz com as classificações corretas de
-cada exemplo em $\boldsymbol{X}$ e $\boldsymbol{C}$ é a matriz de predições
-feita pelo algoritmo nessa iteração.
+\paragraph{Vetor de Classificações ($\textbf{y}$):}
 
-A minha implementação do \textit{Gradient Descent} executa esse procedimento
-até que o número de iterações seja maior do que um limite $\rho$. Nesse
-\textit{dataset}, utilizei $\rho = 500$. Depois do treinamento do modelo,
-obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições para cada
-\textit{tweet} contido nos dados para teste.
+A posição $\textbf{y}(i)$ contém a classificação
+do exemplo $\textbf{X}(i)$.
+
+\paragraph{Tamanho do \textit{Batch} ($\sigma$):}
+
+Determina o tamanho do subconjunto de exemplos que será utilizado em cada
+iteração. O tamanho do conjunto de dados não permitiu que os gradientes
+fossem calculados usando todo o conjunto de uma só vez. Para contornar
+isso utilizei um parâmetro que determina a \textit{porcentagem} do
+conjunto que será utilizada nas iterações.
+
+A cada iteração são calculados os conjuntos $\textbf{X}[\sigma]$ e
+$\textbf{y}[\sigma]$, que contém $m$  elementos escolhidos \textit{ao acaso},
+onde $m = \left\vert{X}\right\vert \cdot \sigma$.  Dessa forma é possível usar
+todo o conjunto de dados sem pagar o custo dos produtos escalares de matrizes
+enormes.
+
+\subsubsection{Saída}
+
+\paragraph{Vetor Final de Pesos ($\textbf{w}(I)$):}
+
+Contém um peso para cada característica dos exemplos de teste
+em \textbf{X}. É usado posteriormente para fazer as predições
+de classificação.
+
+\begin{algorithm}[htpb]
+    \caption{Gradiente Estocástico Descendente \\ com Taxa de Aprendizado Variante}
+    \label{alg:GSD}
+    \begin{algorithmic}[1]
+        \Statex \item[\textbf{Input:}]
+        \Statex $\nabla{}E_{in}(\cdot)$ \Comment Função para cálculo do Gradiente
+        \Statex $I$ \Comment Número de Iterações
+        \Statex $\sigma$ \Comment Tamanho do \textit{batch}
+        \Statex $\alpha^{\prime}$ \Comment Taxa de Aprendizado inicial
+        \Statex $\textbf{w}(0)$ \Comment Vetor inicial de pesos
+        \Statex $\textbf{X}$ \Comment Matriz de exemplos
+        \Statex $\textbf{y}$ \Comment Vetor de classificações
+        \Statex \item[\textbf{Output:}]
+        \Statex $\textbf{w}(I)$ \Comment Vetor final de pesos
+        \Statex
+        \For{$i = 1, 2, \dots, I$}
+        \State Calcule $\textbf{g}_i = \nabla{}E_{in}(\textbf{w}(i),\: \textbf{X}[\sigma],\: \textbf{y}[\sigma])$
+        \State Calcule $\alpha(i) = \frac{\alpha^{\prime}}{1 + log_{2}i}$
+        \State Calcule $\textbf{w}(i) = \textbf{w}(i -1) - \alpha{}\textbf{g}_i$
+        \EndFor
+        \State \Return $\textbf{w}(I)$
+    \end{algorithmic}
+\end{algorithm}
+
+
+\section{Modelos de Regressão} \label{sec:regr}
+
+Esta Seção discute os modelos de regressão
+e suas implementações, feitas em \texttt{Python 3.5.1} e usando o
+módulo \texttt{numpy}.
+
+\subsection{Regressão Linear}
+
+\subsection{Regressão Linear com Regularização $L_2$}
+
+\subsection{Regressão Logística}
+
+\subsection{Regressão Logística com Regularização $L_2$}
 
 \section{Resultados}
 
@@ -189,30 +223,32 @@ obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições pa
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_iterations_linreg}
         \caption{}
-        \label{fig:snt}
+        \label{fig:it_linreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_iterations_linregL2}
         \caption{}
-        \label{fig:ret}
+        \label{fig:it_linregL2}
     \end{subfigure}
     \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_iterations_logreg}
         \caption{}
-        \label{fig:gwd}
+        \label{fig:it_logreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_iterations_logregL2}
         \caption{}
-        \label{fig:bwd}
+        \label{fig:it_logregL2}
     \end{subfigure}
-    \caption{}\label{fig:viz}
+    \caption{Acurácia vs. Número de Iterações ($I$) do Gradiente Estocástico
+    Descendente, com parâmetros fixos: $\lambda=0.0051$, $\alpha=0.5$,
+    $\sigma=10^{-3}$}\label{fig:it}
 \end{figure}
 
 \begin{figure}[htpb]
@@ -220,30 +256,31 @@ obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições pa
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_rate_linreg}
         \caption{}
-        \label{fig:snt}
+        \label{fig:rate_lingreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_rate_linregL2}
         \caption{}
-        \label{fig:ret}
+        \label{fig:rate_linregL2}
     \end{subfigure}
     \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_rate_logreg}
         \caption{}
-        \label{fig:gwd}
+        \label{fig:rate_logreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_rate_logregL2}
         \caption{}
-        \label{fig:bwd}
+        \label{fig:rate_logregL2}
     \end{subfigure}
-    \caption{}\label{fig:viz}
+    \caption{Acurácia vs. Taxa de Aprendizado ($\alpha$), com parâmetros
+    fixos: $\lambda=0.0051$, $I=15000$, $\sigma=10^{-3}$}\label{fig:rate}
 \end{figure}
 
 \begin{figure}[htpb]
@@ -251,30 +288,31 @@ obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições pa
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_linreg}
         \caption{}
-        \label{fig:snt}
+        \label{fig:batch_linreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_linregL2}
         \caption{}
-        \label{fig:ret}
+        \label{fig:batch_linregL2}
     \end{subfigure}
     \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_logreg}
         \caption{}
-        \label{fig:gwd}
+        \label{fig:batch_logreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_logregL2}
         \caption{}
-        \label{fig:bwd}
+        \label{fig:batch_logregL2}
     \end{subfigure}
-    \caption{}\label{fig:viz}
+    \caption{Acurácia vs. Tamanho do \textit{Batch} ($\sigma$), com
+    parâmetros fixos: $\lambda=0.0051$, $I=500$, $\alpha=0.5$}\label{fig:batch}
 \end{figure}
 
 \begin{figure}[htpb]
@@ -282,16 +320,17 @@ obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições pa
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_lambda_linregL2}
         \caption{}
-        \label{fig:snt}
+        \label{fig:lambda_linregL2}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_lambda_logregL2}
         \caption{}
-        \label{fig:ret}
+        \label{fig:lambda_logregL2}
     \end{subfigure}
-    \caption{}\label{fig:viz}
+    \caption{Acurácia vs. Parâmetro $\lambda$, com parâmetros fixos:
+    $\sigma=0.003$, $\alpha=2.0$, $I=500$}\label{fig:lambda}
 \end{figure}
 
 \begin{figure}[htpb]
@@ -299,30 +338,50 @@ obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições pa
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_skl_linreg}
         \caption{}
-        \label{fig:snt}
+        \label{fig:batch_skl_linreg}
     \end{subfigure}
     %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_skl_linregL2}
         \caption{}
-        \label{fig:ret}
+        \label{fig:batch_skl_linregL2}
     \end{subfigure}
     \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[htpb]{0.45\textwidth}
         \includegraphics[width=\textwidth]{acc_vs_batchp_skl_logregL2}
         \caption{}
-        \label{fig:gwd}
+        \label{fig:batch_skl_logregL2}
     \end{subfigure}
-    \caption{}\label{fig:viz}
+    \caption{Acurácia vs. Tamanho do \textit{Batch} ($\sigma$)
+    para algoritmos do \texttt{Scikit Learn}}\label{fig:batch_skl}
 \end{figure}
+
+\begin{table}[htpb]
+    \centering
+    \begin{tabular}{@{}lcc@{}}
+        \textbf{Modelos} & \multicolumn{2}{c}{\textbf{Parâmetros}} \\ \toprule
+        & $\lambda$ & $\alpha$ \\ \midrule
+        Regr. Lin. & - & $0.25$ \\
+        Regr. Lin. ($L_2$) & $2^{-4}$ & $0.25 $       \\
+        Regr. Log. & - & $2$ \\
+        Regr. Log. ($L_2$) & $2^{-10}$ & $0.5$ \\ \bottomrule
+    \end{tabular}
+    \caption{Escolha de parâmetros para as implementações, após os
+    experimentos. Todos os modelos usaram o mesmo número de iterações,
+    $I = 10^{4}$, e tamanho de \textit{batch}, $\sigma = 2^{-6}$ (aprox.
+    $1.5\%$ do conjunto de dados por iteração)}
+    \label{tab:par}
+\end{table}
 
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=.8\textwidth]{acc_vs_algorithm}
-    \caption{}
-    \label{fig:snt}
+    \caption{Acurácia dos algoritmos implementados e do
+    \texttt{Scikit Learn}. Cada algoritmo foi executado
+    com diferentes parâmetros otimizados}
+    \label{fig:algorithm}
 \end{figure}
 
 \section{Conclusão} \label{sec:concl}

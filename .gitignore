@@ -3,4 +3,5 @@
 *.aux
 *.bbl
 *.blg
+*-converted-to.pdf
 __pycache__/
