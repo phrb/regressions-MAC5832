@@ -135,6 +135,8 @@ def scikit_regression(training_samples,
         regr = linear_model.LinearRegression()
     elif model == "linear_l2":
         regr = linear_model.Ridge()
+    elif model == "logistic_l2":
+        regr = linear_model.LogisticRegression(penalty = 'l2')
 
     regr.fit(samples, classifications)
     predictions = regr.predict(testing_samples)

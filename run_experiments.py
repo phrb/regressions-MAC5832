@@ -70,20 +70,19 @@ def plot_sct_cmp(data1_x,
 
     plt.clf()
 
-def plot_bar(index_range,
-             data,
-             plot_name,
-             title,
+def plot_bar(data,
+             yerr,
              xlabel,
              ylabel,
-             tick_labels):
+             indexes,
+             width,
+             tick_labels,
+             file_title,
+             title):
     fig     = plt.figure(1, figsize=(9, 6))
     ax      = fig.add_subplot(111)
 
-    indexes = np.arange(index_range)
-    width   = 0.5
-
-    ax.bar(indexes, data, width, color='black')
+    ax.bar(indexes, data, width, color = 'black', yerr = yerr)
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
@@ -93,7 +92,7 @@ def plot_bar(index_range,
 
     plt.tight_layout()
 
-    fig.savefig("{0}.eps".format(plot_name), format = 'eps', dpi = 1000)
+    fig.savefig("{0}.eps".format(file_title), format = 'eps', dpi = 1000)
 
     plt.clf()
 
@@ -245,7 +244,7 @@ def measure_rate(training_samples,
              data_y,
              data_y_error,
              "acc_vs_rate_{0}".format(file_title),
-             "Accuracy. vs. Learning Rate {0}".format(title),
+             "Accuracy vs. Learning Rate {0}".format(title),
              "Learning Rate (log2)",
              "Accuracy")
 
@@ -321,7 +320,7 @@ def measure_batch(training_samples,
     data_y = []
     data_y_error = []
 
-    measurements = 5
+    measurements = 10
     batches      = 8
     batch        = .0005
 
@@ -353,7 +352,7 @@ def measure_batch(training_samples,
              data_y,
              data_y_error,
              "acc_vs_batchp_{0}".format(file_title),
-             "Accuracy. vs. Batch {0}".format(title),
+             "Accuracy vs. Batch {0}".format(title),
              "Percentage of Examples (log2)",
              "Accuracy")
 
@@ -414,6 +413,318 @@ def measure_all_batches(training_samples,
                   "logregL2",
                   "(Logistic Regression with L2)")
 
+def measure_reg(training_samples,
+                training_classifications,
+                testing_samples,
+                testing_classifications,
+                gradient,
+                iterations,
+                batch,
+                rate,
+                rate_function,
+                regularizer,
+                file_title,
+                title):
+    data_x = []
+    data_y = []
+    data_y_error = []
+
+    measurements = 10
+    lbds         = 25
+    lbd          = 32.
+
+    for k in range(lbds):
+        print("Lambda: {0}".format(lbd))
+
+        data_ys = []
+        for j in range(measurements):
+            predictions = gradient_descent(training_samples,
+                                           training_classifications,
+                                           testing_samples,
+                                           gradient_function        = gradient,
+                                           learning_rate_function   = rate_function,
+                                           learning_rate_parameters = {'rate': rate},
+                                           iterations               = iterations,
+                                           batch_percentage         = batch,
+                                           regularizer_function     = regularizer,
+                                           regularizer_parameters   = {'lambda': lbd})
+
+            data_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        data_y_error.append(stats.sem(data_ys))
+        data_y.append(np.mean(data_ys))
+        data_x.append(np.log2(lbd))
+
+        lbd /= 2.
+
+    plot_sct(data_x,
+             data_y,
+             data_y_error,
+             "acc_vs_lambda_{0}".format(file_title),
+             "Accuracy vs. Lambda {0}".format(title),
+             "Lambda (log2)",
+             "Accuracy")
+
+def measure_all_regs(training_samples,
+                     training_classifications,
+                     testing_samples,
+                     testing_classifications):
+    iterations = 500
+    rate       = 2.
+    batch      = .003
+
+    measure_reg(training_samples,
+                training_classifications,
+                testing_samples,
+                testing_classifications,
+                linear_regression_gradient,
+                iterations,
+                batch,
+                rate,
+                inverse_log_learning_rate,
+                l2_regularization,
+                "linregL2",
+                "(Linear Regression with L2)")
+
+    measure_reg(training_samples,
+                training_classifications,
+                testing_samples,
+                testing_classifications,
+                logistic_regression_gradient,
+                iterations,
+                batch,
+                rate,
+                inverse_log_learning_rate,
+                l2_regularization,
+                "logregL2",
+                "(Logistic Regression with L2)")
+
+def measure_cmp(training_samples,
+                training_classifications,
+                testing_samples,
+                testing_classifications):
+
+    rate_function   = inverse_log_learning_rate
+    iterations      = 10000
+    batch           = 0.015625
+    measurements    = 5
+
+    data_lin_ys       = []
+    data_linl2_ys     = []
+    data_log_ys       = []
+    data_logl2_ys     = []
+    data_skl_lin_ys   = []
+    data_skl_linl2_ys = []
+    data_skl_logl2_ys = []
+
+    data_y            = []
+    data_y_error      = []
+
+
+    for j in range(measurements):
+        print("Iteration: {0}".format(j))
+        print("Runing MyLogL2")
+        gradient        = logistic_regression_gradient
+        regularizer     = l2_regularization
+        rate_parameters = {'rate': .5}
+        reg_parameters  = {'lambda': 0.0009765625}
+        predictions = gradient_descent(training_samples,
+                                       training_classifications,
+                                       testing_samples,
+                                       gradient_function        = gradient,
+                                       learning_rate_function   = rate_function,
+                                       learning_rate_parameters = rate_parameters,
+                                       iterations               = iterations,
+                                       batch_percentage         = batch,
+                                       regularizer_function     = regularizer,
+                                       regularizer_parameters   = reg_parameters)
+
+        data_logl2_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        print("Runing MyLog")
+        gradient        = logistic_regression_gradient
+        regularizer     = no_regularization
+        rate_parameters = {'rate': 2.}
+        predictions = gradient_descent(training_samples,
+                                       training_classifications,
+                                       testing_samples,
+                                       gradient_function        = gradient,
+                                       learning_rate_function   = rate_function,
+                                       learning_rate_parameters = rate_parameters,
+                                       iterations               = iterations,
+                                       batch_percentage         = batch,
+                                       regularizer_function     = regularizer,
+                                       regularizer_parameters   = reg_parameters)
+
+        data_log_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        print("Runing MyLin")
+        gradient        = linear_regression_gradient
+        rate_parameters = {'rate': .25}
+        predictions = gradient_descent(training_samples,
+                                       training_classifications,
+                                       testing_samples,
+                                       gradient_function        = gradient,
+                                       learning_rate_function   = rate_function,
+                                       learning_rate_parameters = rate_parameters,
+                                       iterations               = iterations,
+                                       batch_percentage         = batch,
+                                       regularizer_function     = regularizer,
+                                       regularizer_parameters   = reg_parameters)
+
+        data_lin_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        print("Runing MyLinL2")
+        gradient        = logistic_regression_gradient
+        regularizer     = l2_regularization
+        reg_parameters  = {'lambda': .0625}
+        predictions = gradient_descent(training_samples,
+                                       training_classifications,
+                                       testing_samples,
+                                       gradient_function        = gradient,
+                                       learning_rate_function   = rate_function,
+                                       learning_rate_parameters = rate_parameters,
+                                       iterations               = iterations,
+                                       batch_percentage         = batch,
+                                       regularizer_function     = regularizer,
+                                       regularizer_parameters   = reg_parameters)
+
+        data_linl2_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        print("Runing SKLLogL2")
+        predictions = scikit_regression(training_samples,
+                                        training_classifications,
+                                        testing_samples,
+                                        model = "logistic_l2",
+                                        batch_percentage = batch)
+
+        data_skl_logl2_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        print("Runing SKLLinL2")
+        predictions = scikit_regression(training_samples,
+                                        training_classifications,
+                                        testing_samples,
+                                        model = "linear_l2",
+                                        batch_percentage = batch)
+
+        data_skl_linl2_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+        print("Runing SKLLin")
+        predictions = scikit_regression(training_samples,
+                                        training_classifications,
+                                        testing_samples,
+                                        model = "linear",
+                                        batch_percentage = batch)
+
+        data_skl_lin_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+    data_y.append(np.mean(data_lin_ys))
+    data_y.append(np.mean(data_skl_lin_ys))
+
+    data_y.append(np.mean(data_linl2_ys))
+    data_y.append(np.mean(data_skl_linl2_ys))
+
+    data_y.append(np.mean(data_logl2_ys))
+    data_y.append(np.mean(data_skl_logl2_ys))
+
+    data_y.append(np.mean(data_log_ys))
+
+    data_y_error.append(stats.sem(data_lin_ys))
+    data_y_error.append(stats.sem(data_skl_lin_ys))
+
+    data_y_error.append(stats.sem(data_linl2_ys))
+    data_y_error.append(stats.sem(data_skl_linl2_ys))
+
+    data_y_error.append(stats.sem(data_logl2_ys))
+    data_y_error.append(stats.sem(data_skl_logl2_ys))
+
+    data_y_error.append(stats.sem(data_log_ys))
+
+    indexes = np.arange(len(data_y))
+    width   = .5
+
+    plot_bar(data_y,
+             data_y_error,
+             "Regression Algorithms",
+             "Accuracy",
+             indexes,
+             width,
+             ("Lin", "SKL Lin",
+              "LinL2", "SKL LinL2",
+              "LogL2", "SKL LogL2",
+              "Log"),
+             "acc_vs_algorithm",
+             "Accuracy vs. Algorithms")
+
+def measure_skl_batch(training_samples,
+                      training_classifications,
+                      testing_samples,
+                      testing_classifications,
+                      model,
+                      file_title,
+                      title):
+    data_x = []
+    data_y = []
+    data_y_error = []
+
+    measurements = 5
+    batches      = 8
+    batch        = .001
+
+    for k in range(batches):
+        print("Batch: {0}".format(batch))
+
+        data_ys = []
+        for j in range(measurements):
+            predictions = scikit_regression(training_samples,
+                                            training_classifications,
+                                            testing_samples,
+                                            model = model,
+                                            batch_percentage = batch)
+
+            data_ys.append(get_accuracy_percentage(predictions, testing_classifications))
+
+        data_y_error.append(stats.sem(data_ys))
+        data_y.append(np.mean(data_ys))
+        data_x.append(np.log2(batch))
+
+        batch *= 2.
+
+    plot_sct(data_x,
+             data_y,
+             data_y_error,
+             "acc_vs_batchp_{0}".format(file_title),
+             "Accuracy vs. Batch {0}".format(title),
+             "Percentage of Examples (log2)",
+             "Accuracy")
+
+def measure_all_skl_batches(training_samples,
+                            training_classifications,
+                            testing_samples,
+                            testing_classifications):
+    measure_skl_batch(training_samples,
+                      training_classifications,
+                      testing_samples,
+                      testing_classifications,
+                      "linear",
+                      "skl_linreg",
+                      "(SKL Linear Regression)")
+
+    measure_skl_batch(training_samples,
+                      training_classifications,
+                      testing_samples,
+                      testing_classifications,
+                      "linear_l2",
+                      "skl_linregL2",
+                      "(SKL Linear Regression with L2)")
+
+    measure_skl_batch(training_samples,
+                      training_classifications,
+                      testing_samples,
+                      testing_classifications,
+                      "logistic_l2",
+                      "skl_logregL2",
+                      "(SKL Logistic Regression with L2)")
+
 if __name__ == '__main__':
     config_matplotlib()
     data = load_file("dataset-tarefa2.npz")
@@ -423,10 +734,25 @@ if __name__ == '__main__':
     testing_samples          = data[2]
     testing_classifications  = data[3]
 
-    measure_all_batches(training_samples,
-                        training_classifications,
-                        testing_samples,
-                        testing_classifications)
+#    measure_cmp(training_samples,
+#                training_classifications,
+#                testing_samples,
+#                testing_classifications)
+
+    measure_all_skl_batches(training_samples,
+                            training_classifications,
+                            testing_samples,
+                            testing_classifications)
+
+#    measure_all_regs(training_samples,
+#                     training_classifications,
+#                     testing_samples,
+#                     testing_classifications)
+
+#    measure_all_batches(training_samples,
+#                        training_classifications,
+#                        testing_samples,
+#                        testing_classifications)
 
 #    measure_all_rates(training_samples,
 #                      training_classifications,
@@ -437,11 +763,3 @@ if __name__ == '__main__':
 #                           training_classifications,
 #                           testing_samples,
 #                           testing_classifications)
-
-#    predictions = scikit_regression(training_samples,
-#                                    training_classifications,
-#                                    testing_samples,
-#                                    model = "linear_l2",
-#                                    batch_percentage = .0004)
-#
-#    print(get_accuracy_percentage(predictions, testing_classifications))
