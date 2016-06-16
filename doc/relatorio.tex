@@ -13,7 +13,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
-\graphicspath{{../src/plot/}}
+\graphicspath{{../img/}}
 
 \newcommand{\rom}[1]{\uppercase\expandafter{\romannumeral #1\relax}}
 
@@ -69,65 +69,6 @@ para o \textit{Perceptron} e \textit{Gradient Descent}.
 
 \paragraph{\texttt{./src/plot}} Contém o código para
 gerar as figuras com as visualizações, e também as figuras.
-
-\section{Visualizando o \textit{dataset}} \label{sec:viz}
-
-Esta Seção apresenta alguns gráficos que ajudaram a visualizar
-o \textit{dataset} utilizado no exercício.
-
-A Figura~\ref{fig:viz} apresenta quatro gráficos gerados a partir dos exeplos
-do \textit{dataset}. A Figura~\ref{fig:snt} associa o \textit{sentimento total}
-a cada uma das companhias aéreas.  O sentimento total é a soma dos valores de
-\texttt{airline\_sentiment} dados a cada \textit{tweet} É possível ver que
-considerar a companhia aérea como parte do modelo não trará muita informação,
-pois o sentimento total é negativo para todas as companhias, e não existem
-grandes variações de uma companhia para outra, com exceção da \textit{Virgin}.
-
-\begin{figure}[htpb]
-    \centering
-    \begin{subfigure}[htpb]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{airline_sentiment}
-        \caption{}
-        \label{fig:snt}
-    \end{subfigure}
-    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
-    %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[htpb]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{airline_retweet}
-        \caption{}
-        \label{fig:ret}
-    \end{subfigure}
-    \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
-    %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[htpb]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{airline_good_words}
-        \caption{}
-        \label{fig:gwd}
-    \end{subfigure}
-    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
-    %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[htpb]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{airline_bad_words}
-        \caption{}
-        \label{fig:bwd}
-    \end{subfigure}
-    \caption{Visualizando o \textit{dataset}}\label{fig:viz}
-\end{figure}
-
-A Figura~\ref{fig:ret} associa a quantidade de \textit{retweets}
-a cada companhia aérea. Novamente a \textit{Virgin} se destaca
-das demais, dessa vez por ter poucos \textit{retweets}. Ainda assim,
-não existe variação significativa na quantidade de \textit{retweets}
-de cada companhia, e decidi por não usar essa característica no modelo.
-
-As Figuras~\ref{fig:gwd} e~\ref{fig:bwd} mostram, respectivamente, os
-sentimentos totais associados a um conjunto com palavras consideradas
-\lq{}\lq{}boas\rq{}\rq{} ou positivas, e a outro com palavras consideradas
-\lq{}\lq{}ruins\rq{}\rq{} ou negativas. Com essas visualizações é possível
-concluir que usar as palavras contidas nos \textit{tweets} como características
-nos vetores de características é uma boa ideia para o modelo, pois o sentimento
-total associado ao grupo de palavras positivas também foi positivo, e o
-sentimento total associado ao grupo de palavras negativas também foi negativo.
 
 \section{Algoritmos de Aprendizado de Máquina}
 
@@ -240,6 +181,149 @@ até que o número de iterações seja maior do que um limite $\rho$. Nesse
 \textit{dataset}, utilizei $\rho = 500$. Depois do treinamento do modelo,
 obtemos um vetor $\boldsymbol{w}^{*}$, que é usado para gerar as predições para cada
 \textit{tweet} contido nos dados para teste.
+
+\section{Resultados}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_iterations_linreg}
+        \caption{}
+        \label{fig:snt}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_iterations_linregL2}
+        \caption{}
+        \label{fig:ret}
+    \end{subfigure}
+    \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_iterations_logreg}
+        \caption{}
+        \label{fig:gwd}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_iterations_logregL2}
+        \caption{}
+        \label{fig:bwd}
+    \end{subfigure}
+    \caption{}\label{fig:viz}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_rate_linreg}
+        \caption{}
+        \label{fig:snt}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_rate_linregL2}
+        \caption{}
+        \label{fig:ret}
+    \end{subfigure}
+    \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_rate_logreg}
+        \caption{}
+        \label{fig:gwd}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_rate_logregL2}
+        \caption{}
+        \label{fig:bwd}
+    \end{subfigure}
+    \caption{}\label{fig:viz}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_linreg}
+        \caption{}
+        \label{fig:snt}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_linregL2}
+        \caption{}
+        \label{fig:ret}
+    \end{subfigure}
+    \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_logreg}
+        \caption{}
+        \label{fig:gwd}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_logregL2}
+        \caption{}
+        \label{fig:bwd}
+    \end{subfigure}
+    \caption{}\label{fig:viz}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_lambda_linregL2}
+        \caption{}
+        \label{fig:snt}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_lambda_logregL2}
+        \caption{}
+        \label{fig:ret}
+    \end{subfigure}
+    \caption{}\label{fig:viz}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_skl_linreg}
+        \caption{}
+        \label{fig:snt}
+    \end{subfigure}
+    %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_skl_linregL2}
+        \caption{}
+        \label{fig:ret}
+    \end{subfigure}
+    \hfill %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+    %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[htpb]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{acc_vs_batchp_skl_logregL2}
+        \caption{}
+        \label{fig:gwd}
+    \end{subfigure}
+    \caption{}\label{fig:viz}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=.8\textwidth]{acc_vs_algorithm}
+    \caption{}
+    \label{fig:snt}
+\end{figure}
 
 \section{Conclusão} \label{sec:concl}
 

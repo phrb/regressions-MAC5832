@@ -1,2 +1,6 @@
 *.swp
+*.log
+*.aux
+*.bbl
+*.blg
 __pycache__/
