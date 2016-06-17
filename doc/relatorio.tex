@@ -27,7 +27,8 @@
 \begin{titlepage}
     \centering
     \vspace*{4cm}
-    \textbf{\huge{Gradiente Descendente Estocástico -- MAC5832}}\\
+    \textbf{\Large{Trabalho \rom{2} de MAC5832: \\ Gradiente Estocástico Descendente, \\
+    Modelos de Regressão e Regularização $L_2$}}\\
 
     \vskip 1cm
 
@@ -165,9 +166,9 @@ conjunto que será utilizada nas iterações.
 
 A cada iteração são calculados os conjuntos $\textbf{X}[\sigma]$ e
 $\textbf{y}[\sigma]$, que contém $m$  elementos escolhidos \textit{ao acaso},
-onde $m = \left\vert{X}\right\vert \cdot \sigma$.  Dessa forma é possível usar
-todo o conjunto de dados sem pagar o custo dos produtos escalares de matrizes
-enormes.
+onde $m = |\textbf{X}| \cdot \sigma$, e $|\textbf{X}|$ é o número total de
+exemplos.  Dessa forma é possível usar todo o conjunto de dados sem pagar o
+custo dos produtos escalares de matrizes enormes.
 
 \subsubsection{Saída}
 
@@ -204,19 +205,164 @@ de classificação.
 
 \section{Modelos de Regressão} \label{sec:regr}
 
-Esta Seção discute os modelos de regressão
-e suas implementações, feitas em \texttt{Python 3.5.1} e usando o
-módulo \texttt{numpy}.
+Esta Seção apresenta as expressões para os modelos de regressão implementados
+em \texttt{Python 3.5.1}, usando o módulo \texttt{numpy}.
 
 \subsection{Regressão Linear}
 
-\subsection{Regressão Linear com Regularização $L_2$}
+A ideia deste modelo é separar, se possível, o conjunto de dados com um plano
+de dimensão $|\textbf{w}|$, isto é, de dimensão igual ao número de
+características dos exemplos. Além disso, a soma dos quadrados das distâncias
+entre os exemplos e o plano deve ser minimizada.
+A hipótese no caso da Regressão Linear é dada por:
+
+\begin{align*}
+    h(\textbf{X}(i),\textbf{w}) = \textbf{w}^{T}\textbf{X}(i)
+\end{align*}
+
+
+\paragraph{Expressão para $E_{in}(\cdot)$}
+
+\begin{align*}
+    E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = \frac{1}{|\textbf{X}|} \|\textbf{Xw} - \textbf{y}\|^{2}
+\end{align*}
+
+Onde $|\textbf{X}|$ é o número total de exemplos.
+
+\paragraph{Expressão para $\nabla{}E_{in}(\cdot)$}
+
+\begin{align*}
+    \nabla{}E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = \frac{2}{|\textbf{X}|} (\textbf{X}^{T}\textbf{Xw} - \textbf{X}^{T}\textbf{y})
+\end{align*}
 
 \subsection{Regressão Logística}
 
+A ideia deste algoritmo é considerar a \textit{probabilidade} de classificação
+dos exemplos, e não apenas um valor binário. A hipótese no caso da Regressão
+Logística é dada por:
+
+\begin{align*}
+    h(\textbf{X}(i),\textbf{w}) = \theta(\textbf{w}^{T}\textbf{X}(i))
+\end{align*}
+
+Onde a função $\theta(\cdot)$ produz valores \textit{entre} $0$ e $1$, e é
+chamada de \textit{função logística}:
+
+\begin{align*}
+    \theta(s) = \frac{e^{s}}{1 + e^{s}}
+\end{align*}
+
+\paragraph{Expressão para $E_{in}(\cdot)$}
+
+\begin{align*}
+    E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = \frac{1}{|\textbf{X}|} \sum^{|\textbf{X}|}_{i=1}{ln(1 + e^{-\textbf{y}(i)\textbf{w}^{T}\textbf{X}(i)})}
+\end{align*}
+
+\paragraph{Expressão para $\nabla{}E_{in}(\cdot)$}
+
+\begin{align*}
+    \nabla{}E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = -\frac{1}{|\textbf{X}|} \sum^{|\textbf{X}|}_{i=1}{\frac{\textbf{y}(i)\textbf{X}(i)}{1 + e^{\textbf{y}(i)\textbf{w}^{T}\textbf{X}(i)}}}
+\end{align*}
+
+\subsection{Regressão Linear com Regularização $L_2$}
+
+A \textit{Regularização} é uma estratégia para \lq\lq{}combater\rq\rq{} a
+tendência que os modelos de regularização apresentam de ajustar-se demais ao
+conjunto de dados de aprendizado, num processo chamado de \textit{overfitting}.
+
+Utilizamos neste trabalho o método para regularização introduzido por
+\textit{Andrey Tikhonov}, conhecido como \textit{Ridge Regression}.
+Na discussão do livro-texto, esse método de regressão é apresentado
+como a adição de uma limitação, ou \textit{constraint}, à otimização
+do $E_{in}$ de um dado modelo de regressão.
+
+No caso da \textit{Regularização $L_2$} essa limitação é representada pelo termo:
+
+\begin{align*}
+    E_{in}(\textbf{w}) = -\lambda\|\textbf{w}\|^{2}
+\end{align*}
+
+Onde $\lambda > 0$ é um parâmetro a ser escolhido. O gradiente do termo
+de regularização é dado por:
+
+\begin{align*}
+    \nabla{}E_{in}(\textbf{w}) = -2\lambda{}\textbf{w}
+\end{align*}
+
+Adicionando o termo de regularização ao modelo de Regressão Linear, temos:
+
+\paragraph{Expressão para $E_{in}(\cdot)$}
+
+\begin{align*}
+    E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = \frac{1}{|\textbf{X}|} \|\textbf{Xw} - \textbf{y}\|^{2} - \lambda\|\textbf{w}\|^{2}
+\end{align*}
+
+\paragraph{Expressão para $\nabla{}E_{in}(\cdot)$}
+
+Considerando a propriedade de $\nabla$:
+
+\begin{align*}
+    \nabla(f + g) = \nabla(f) + \nabla(g)
+\end{align*}
+
+E usando a expressão para $\nabla{}E_{in}(\cdot)$ da Regressão Linear, temos:
+
+\begin{align*}
+    \nabla{}E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = \frac{2}{|\textbf{X}|} (\textbf{X}^{T}\textbf{Xw} - \textbf{X}^{T}\textbf{y}) - 2\lambda\textbf{w}
+\end{align*}
+
 \subsection{Regressão Logística com Regularização $L_2$}
 
+Adicionando o termo de regularização ao modelo de Regressão Logística, temos:
+
+\paragraph{Expressão para $E_{in}(\cdot)$}
+
+\begin{align*}
+    E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = \frac{1}{|\textbf{X}|} \sum^{|\textbf{X}|}_{i=1}{ln(1 + e^{-\textbf{y}(i)\textbf{w}^{T}\textbf{X}(i)})} - \lambda\|\textbf{w}\|^{2}
+\end{align*}
+
+\paragraph{Expressão para $\nabla{}E_{in}(\cdot)$}
+
+\begin{align*}
+    \nabla{}E_{in}(\textbf{w}, \textbf{X}, \textbf{y}) = -\frac{1}{|\textbf{X}|} \sum^{|\textbf{X}|}_{i=1}{\frac{\textbf{y}(i)\textbf{X}(i)}{1 + e^{\textbf{y}(i)\textbf{w}^{T}\textbf{X}(i)}}} - 2\lambda\textbf{w}
+\end{align*}
+
+\subsection{Modelos do \texttt{Scikit Learn}}
+
+Utilizei as implementações para Regressão Linear, Regressão Linear com
+Regularização $L_2$ e Regressão Logística com Regularização $L_2$ disponíveis
+no módulo \texttt{sklearn.linear\_model} do pacote \texttt{Scikit Learn}.  Não
+utilizei o método de Regressão Logística sem Regularização.
+
 \section{Resultados}
+
+Esta Seção apresenta os resultados obtidos medindo a acurácia dos modelos de
+regressão implementados para o trabalho. O desempenho dos modelos foi avaliado
+usando o conjunto de dados disponibilizado pelo monitor da disciplina. Neste
+trabalho, a acurácia é a porcentagem de exemplos no conjunto de testes que
+foram classificados corretamente.
+
+O objetivo dessas avaliações de desempenho é estudar como cada modelo de
+regressão e regularização se comporta quanto à acurácia em relação a seus
+parâmetros. Busquei encontrar os valores ideais dos parâmetros $I$ (Número de
+Iterações), $\sigma$ (Tamanho do \textit{Batch}), $\lambda$ (Parâmetro de
+Regularização) e $\alpha$ (Taxa de Aprendizagem) para cada modelo de regressão
+e regularização.
+
+Os pontos de todos os gráficos apresentados nessa Seção foram obtidos
+calculando a média de 10 execuções do respectivo modelo com os parâmetros
+em questão. Cada ponto também apresenta o erro padrão calculado à partir
+das 10 medições.
+
+\newpage
+\subsection{Acurácia vs. Iterações}
+
+Como era de se esperar, a acurácia do algoritmo para o Gradiente
+Estocástico Descendente aumenta com o Número de Iterações. Note
+que o aumento da acurácia diminui depois de cerca de $15000$ iterações.
+Também é interessante notar que o erro padrão das amostras para o modelo de
+Regressão Linear com Regularização $L_2$ é maior que o das amostras de outros
+modelos. Não sei explicar o porquê.
 
 \begin{figure}[htpb]
     \centering
@@ -251,6 +397,16 @@ módulo \texttt{numpy}.
     $\sigma=10^{-3}$}\label{fig:it}
 \end{figure}
 
+\newpage
+\subsection{Acurácia vs. Taxa de Aprendizado}
+
+Os resultados para a Regressão Linear e a Regressão Linear com Regularização
+$L_2$ apresentaram acurácia de $0\%$ para $\alpha > 2^{0}$ por conta de erros
+de \textit{overflow}. Uma possível maneira de resolver esse problema seria
+normalizar o vetor de pesos. Não experimentei essa solução pois os pontos
+válidos para esses modelos mostram que a acurácia começa a diminuir para
+$\alpha > 2^{-1}$. Note que cada algoritmo tem um valor preferível de $\alpha$.
+
 \begin{figure}[htpb]
     \centering
     \begin{subfigure}[htpb]{0.45\textwidth}
@@ -282,6 +438,15 @@ módulo \texttt{numpy}.
     \caption{Acurácia vs. Taxa de Aprendizado ($\alpha$), com parâmetros
     fixos: $\lambda=0.0051$, $I=15000$, $\sigma=10^{-3}$}\label{fig:rate}
 \end{figure}
+
+\newpage
+\subsection{Acurácia vs. Tamanho do \textit{Batch}}
+
+Novamente, quanto maior a porcentagem $\sigma$ de exemplos do conjunto usados
+em cada iteração, maior a acurácia do modelo. É necessário balancear a acurácia
+com a capacidade computacional, pois a duração de uma iteração é proporcional a
+$\sigma$. Note que o erro padrão é inversamente proporcional a $\sigma$, pois
+com mais exemplos usados a variabilidade fica menor.
 
 \begin{figure}[htpb]
     \centering
@@ -315,6 +480,18 @@ módulo \texttt{numpy}.
     parâmetros fixos: $\lambda=0.0051$, $I=500$, $\alpha=0.5$}\label{fig:batch}
 \end{figure}
 
+\newpage
+\subsection{Acurácia vs. $\lambda$}
+
+A acurácia dos modelos em relação a $\lambda$ se comporta de forma distinta
+para os dois modelos com regularização implementados. O modelo de Regressão
+Linear com Regularização $L_2$ apresenta maior acurácia para $2^{-5} < \lambda
+< 2^{0}$, e o modelo de Regressão Logística com Regularização $L_2$ apresenta
+melhor acurácia para $\lambda < 2^{-5}$. Alguns valores de $\lambda$ também
+resultaram em \textit{overflow}, mas também decidi não implementar
+normalizações por que a acurácia pareceu aumentar na outra direção de variação
+do parâmetro.
+
 \begin{figure}[htpb]
     \centering
     \begin{subfigure}[htpb]{0.45\textwidth}
@@ -332,6 +509,18 @@ módulo \texttt{numpy}.
     \caption{Acurácia vs. Parâmetro $\lambda$, com parâmetros fixos:
     $\sigma=0.003$, $\alpha=2.0$, $I=500$}\label{fig:lambda}
 \end{figure}
+
+\newpage
+\subsection{Acurácia vs. Tamanho do \textit{Batch} para o \texttt{Scikit Learn}} \label{sec:acc_vs_batchSKL}
+
+A acurácia dos algoritmos do \texttt{Scikit Learn} se beneficiou mais do
+aumento de tamanho do \textit{batch}. Acredito que isso se deva ao fato de que
+as minhas implementações ainda tinham acesso ao conjunto total de dados, e
+escolhiam ao acaso quais exemplos comporiam o \textit{batch} a ser utilizado
+numa dada iteração. Assim, as implementações desse trabalho se beneficiaram do
+conjunto total de dados e também do benéficio de realizar operações em porções
+menores de exemplos. O erro padrão das medições também foi maior para esses
+algoritmos.
 
 \begin{figure}[htpb]
     \centering
@@ -358,6 +547,12 @@ módulo \texttt{numpy}.
     para algoritmos do \texttt{Scikit Learn}}\label{fig:batch_skl}
 \end{figure}
 
+\newpage
+\subsection{Otimização dos Parâmetros}
+
+A Tabela \ref{tab:par} apresenta a escolha de parâmetros para cada
+modelo feita após os experimentos.
+
 \begin{table}[htpb]
     \centering
     \begin{tabular}{@{}lcc@{}}
@@ -375,6 +570,26 @@ módulo \texttt{numpy}.
     \label{tab:par}
 \end{table}
 
+\newpage
+\subsection{Comparação de Acurácia}
+
+A Figura \ref{fig:algorithm} apresenta comparações
+da acurácia dos modelos implementados neste trabalho
+e dos modelos disponíveis no \texttt{Scikit Learn},
+denotados por \lq\lq{}\textit{SKL}\rq\rq{} na figura.
+
+Acredito que as minhas implementações tiveram acurácia
+maior que as implementações do \texttt{Scikit Learn} por
+conta do motivo descrito na Seção \ref{sec:acc_vs_batchSKL}:
+nas minhas implementações, o parâmetro $\sigma$ determina
+qual a \textit{porcentagem} do conjunto de exemplos que
+será utilizada em cada iteração, mas não limita \textit{quais}
+exemplos podem ser selecionados. A cada iteração, um novo
+conjunto de exemplos é selecionado. Nas implementações do
+\texttt{Scikit Learn} o parâmetro $\sigma$ determina a qual
+porcentagem do conjunto de exemplos o algoritmo terá
+\textit{acesso}.
+
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=.8\textwidth]{acc_vs_algorithm}
@@ -384,11 +599,13 @@ módulo \texttt{numpy}.
     \label{fig:algorithm}
 \end{figure}
 
+\newpage
 \section{Conclusão} \label{sec:concl}
 
-A minha implementação do \textit{Perceptron} teve um desempenho melhor do que a
-implementação do \textit{Gradient Descent} mas, usando metade dos exemplos como
-treinamento e outra metade como teste, ambos os algoritmos atingiram resultados
-de por volta de $10\%$ de exemplos classificados erroneamente.
+Este relatório apresentou e discutiu implementações dos modelos de Regressão
+Linear e Regressão Logística, usando o método de Regularização $L_2$. Foram
+feitas análises de acurácia em relação à variação dos parâmetros mais
+importantes desses modelos, e comparações de acurácia com implementações dos
+modelos no pacote \texttt{Scikit Learn}.
 
 \end{document}
