@@ -47,11 +47,11 @@
 \section{Introdução} \label{sec:intro}
 
 Este relatório descreve as implementações realizadas para o Trabalho $2$ da
-disciplina \textit{MAC5832}, apresenta análises de desempenho desses algoritmos
-segundo seus parâmetros, e compara o desempenho dessas implementações com
-algoritmos do pacote \texttt{Scikit Learn}.
+disciplina \textit{MAC5832}, apresenta análises de acurácia em relação a
+diferentes parâmetros e comparações dessas implementações com algoritmos do
+pacote \texttt{Scikit Learn}.
 
-Foram implementados um algoritmo para Gradiente Descendente Estocástico, dois
+Foram implementados um algoritmo para Gradiente Estocástico Descendente, dois
 modelos de regressão e um método de regularização, totalizando quatro
 combinações de modelos: Regressão Linear, Regressão Linear com Regularização
 $L_2$, Regressão Logística e Regressão Logística com Regularização $L_2$.
@@ -86,29 +86,29 @@ cada iteração do método do Gradiente Estocástico Descendente calcula o
 A técnica do Gradiente Estocástico Descendente pode ser compreendida
 intuitivamente como a \lq\lq{}exploração\rq\rq{} de um terreno com diferentes
 inclinações e profundidades, utilizando uma bola sujeita à força da gravidade.
-A bola tenderá a encontrar o ponto do terreno com menor profundidade, mas o
-local inicial terá bastante impacto no local final. Formas de atenuar esse
-problema incluem utilizar várias bolas ao mesmo tempo, ou bolas com
-\lq\lq{}coeficientes de atrito\rq\rq{} diferentes.
+O movimento da bola no terreno tenderá a estabilizar-se no ponto do terreno com
+menor profundidade, mas o local inicial terá bastante impacto no local final.
+Formas de atenuar esse problema incluem utilizar várias bolas ao mesmo tempo,
+ou bolas com \lq\lq{}coeficientes de atrito\rq\rq{} diferentes.
 
 \subsection{Algoritmo}
 
 A implementação da técnica do Gradiente Estocástico Descendente deste trabalho
 foi feita na linguagem \texttt{Python 3.5.1} e está descrita em pseudocódigo no
-Algoritmo \ref{alg:GSD}. O resto dessa Seção descreve a implementação em
+Algoritmo \ref{alg:GSD}. O resto desta Seção descreve a implementação em
 detalhes.
 
 \subsubsection{Parâmetros}
 
 A implementação foi feita de forma \textit{modular}, permitindo que funções
-para o cálculo do gradiente e da taxa de aprendizado fossem passadas como
+para o cálculo do gradiente e da taxa de aprendizagem fossem passadas como
 parâmetro. Esta Seção descreve os parâmetros para o algoritmo implementado.
 
-\paragraph{Taxa de Aprendizado inicial ($\alpha^{\prime}$):}
+\paragraph{Taxa de Aprendizagem inicial ($\alpha^{\prime}$):}
 
 Em todos os experimentos deste trabalho utilizei a seguinte função
-para o cálculo da taxa de aprendizado $\alpha(i)$, onde $i$ é o número da
-iteração atual do algoritmo, e $\alpha^{\prime}$ é a taxa de aprendizado
+para o cálculo da taxa de aprendizagem $\alpha(i)$, onde $i$ é o número da
+iteração atual do algoritmo, e $\alpha^{\prime}$ é a taxa de aprendizagem
 inicial:
 
 \begin{align*}
@@ -117,7 +117,7 @@ inicial:
 
 Seguindo a metáfora para a compreensão intuitiva da técnica, a ideia é
 modificar o \lq\lq{}coeficiente de atrito\rq\rq{}, isto é, a taxa de
-aprendizado, para que em iterações inicias sejam permitidas variações maiores
+aprendizagem, para que em iterações inicias sejam permitidas variações maiores
 no vetor de pesos, e posteriomente na execução do algoritmo, apenas
 \lq\lq{}saltos\rq\rq{} menores.
 
@@ -175,14 +175,14 @@ em \textbf{X}. É usado posteriormente para fazer as predições
 de classificação.
 
 \begin{algorithm}[htpb]
-    \caption{Gradiente Estocástico Descendente \\ com Taxa de Aprendizado Variante}
+    \caption{Gradiente Estocástico Descendente \\ com Taxa de Aprendizagem Variante}
     \label{alg:GSD}
     \begin{algorithmic}[1]
         \Statex \item[\textbf{Input:}]
         \Statex $\nabla{}E_{in}(\cdot)$ \Comment Função para cálculo do Gradiente
         \Statex $I$ \Comment Número de Iterações
         \Statex $\sigma$ \Comment Tamanho do \textit{batch}
-        \Statex $\alpha^{\prime}$ \Comment Taxa de Aprendizado inicial
+        \Statex $\alpha^{\prime}$ \Comment Taxa de Aprendizagem inicial
         \Statex $\textbf{w}(0)$ \Comment Vetor inicial de pesos
         \Statex $\textbf{X}$ \Comment Matriz de exemplos
         \Statex $\textbf{y}$ \Comment Vetor de classificações
@@ -264,7 +264,7 @@ chamada de \textit{função logística}:
 
 A \textit{Regularização} é uma estratégia para \lq\lq{}combater\rq\rq{} a
 tendência que os modelos de regularização apresentam de ajustar-se demais ao
-conjunto de dados de aprendizado, num processo chamado de \textit{overfitting}.
+conjunto de dados de treino, num processo chamado de \textit{overfitting}.
 
 Utilizamos neste trabalho o método para regularização introduzido por
 \textit{Andrey Tikhonov}, conhecido como \textit{Ridge Regression}.
@@ -394,7 +394,7 @@ modelos. Não sei explicar o porquê.
 \end{figure}
 
 \newpage
-\subsection{Acurácia vs. Taxa de Aprendizado}
+\subsection{Acurácia vs. Taxa de Aprendizagem}
 
 Os resultados para a Regressão Linear e a Regressão Linear com Regularização
 $L_2$ apresentaram acurácia de $0\%$ para $\alpha > 2^{0}$ por conta de erros
@@ -431,7 +431,7 @@ $\alpha > 2^{-1}$. Note que cada algoritmo tem um valor preferível de $\alpha$.
         \caption{}
         \label{fig:rate_logregL2}
     \end{subfigure}
-    \caption{Acurácia vs. Taxa de Aprendizado ($\alpha$), com parâmetros
+    \caption{Acurácia vs. Taxa de Aprendizagem ($\alpha$), com parâmetros
     fixos: $\lambda=0.0051$, $I=15000$, $\sigma=10^{-3}$}\label{fig:rate}
 \end{figure}
 
@@ -546,8 +546,12 @@ algoritmos.
 \newpage
 \subsection{Otimização dos Parâmetros}
 
-A Tabela \ref{tab:par} apresenta a escolha de parâmetros para cada
-modelo feita após os experimentos.
+A Tabela \ref{tab:par} apresenta a escolha de parâmetros para cada modelo feita
+após os experimentos.  Como tanto a acurácia dos modelos como o tempo de
+execução aumentam proporcionalmente ao número de iterações $I$ e ao tamanho do
+\textit{batch} $\sigma$, escolhi os maiores valores possíveis desses
+parâmetros, isto é, valores grandes o suficiente para uma boa acurácia, mas
+com tempo de execução razoável.
 
 \begin{table}[htpb]
     \centering
@@ -555,8 +559,8 @@ modelo feita após os experimentos.
         \textbf{Modelos} & \multicolumn{2}{c}{\textbf{Parâmetros}} \\ \toprule
         & $\lambda$ & $\alpha$ \\ \midrule
         Regr. Lin. & - & $0.25$ \\
-        Regr. Lin. ($L_2$) & $2^{-4}$ & $0.25 $       \\
         Regr. Log. & - & $2$ \\
+        Regr. Lin. ($L_2$) & $2^{-4}$ & $0.25 $       \\
         Regr. Log. ($L_2$) & $2^{-10}$ & $0.5$ \\ \bottomrule
     \end{tabular}
     \caption{Escolha de parâmetros para as implementações, após os
@@ -569,29 +573,31 @@ modelo feita após os experimentos.
 \newpage
 \subsection{Comparação de Acurácia}
 
-A Figura \ref{fig:algorithm} apresenta comparações
-da acurácia dos modelos implementados neste trabalho
-e dos modelos disponíveis no \texttt{Scikit Learn},
-denotados por \lq\lq{}\textit{SKL}\rq\rq{} na figura.
+A Figura \ref{fig:algorithm} apresenta comparações da acurácia dos modelos
+implementados neste trabalho e dos modelos disponíveis no \texttt{Scikit
+Learn}, denotados por \lq\lq{}\textit{SKL}\rq\rq{} na figura.
 
-Acredito que as minhas implementações tiveram acurácia
-maior que as implementações do \texttt{Scikit Learn} por
-conta do motivo descrito na Seção \ref{sec:acc_vs_batchSKL}:
-nas minhas implementações, o parâmetro $\sigma$ determina
-qual a \textit{porcentagem} do conjunto de exemplos que
-será utilizada em cada iteração, mas não limita \textit{quais}
-exemplos podem ser selecionados. A cada iteração, um novo
-conjunto de exemplos é selecionado. Nas implementações do
-\texttt{Scikit Learn} o parâmetro $\sigma$ determina a qual
-porcentagem do conjunto de exemplos o algoritmo terá
-\textit{acesso}.
+Acredito que as minhas implementações tiveram acurácia maior que as
+implementações do \texttt{Scikit Learn} por conta do motivo descrito na Seção
+\ref{sec:acc_vs_batchSKL}: nas minhas implementações, o parâmetro $\sigma$
+determina qual a \textit{porcentagem} do conjunto de exemplos que será
+utilizada em cada iteração, mas não limita \textit{quais} exemplos podem ser
+selecionados. A cada iteração, um novo conjunto de exemplos é selecionado. Nas
+implementações do \texttt{Scikit Learn} o parâmetro $\sigma$ determina a qual
+porcentagem do conjunto de exemplos o algoritmo terá \textit{acesso}.
+
+Portanto, não é correto dizer que as acurácias das implementações deste
+trabalho são maiores do que as de suas implementações correspondentes no
+\texttt{Scikit Learn}. Ademais, é interessante notar que as implementações do
+\texttt{Scikit Learn} têm tempo de execução muito menor do que as
+implementações deste trabalho.
 
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=.8\textwidth]{acc_vs_algorithm}
     \caption{Acurácia dos algoritmos implementados e do
-    \texttt{Scikit Learn}. Cada algoritmo foi executado
-    com diferentes parâmetros otimizados}
+    \texttt{Scikit Learn}. Os algoritmos foram executados
+    com os parâmetros descritos na Tabela ~\ref{tab:par}}
     \label{fig:algorithm}
 \end{figure}
 
